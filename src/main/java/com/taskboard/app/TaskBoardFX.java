@@ -1,18 +1,18 @@
 package com.taskboard.app;
 
 import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
 public class TaskBoardFX extends Application {
 
     @Override
-    public void start(Stage stage) {
-        Label hello = new Label("Hello JavaFX from Codespace !");
-        Scene scene = new Scene(hello, 300, 200);
+    public void start(Stage stage) throws Exception {
+        Parent root = FXMLLoader.load(getClass().getResource("/fxml/taskboard.fxml"));
         stage.setTitle("TaskBoard");
-        stage.setScene(scene);
+        stage.setScene(new Scene(root, 900, 600));
         stage.show();
     }
 

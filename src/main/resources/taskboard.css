@@ -1,0 +1,12 @@
+/* Restore selection highlighting: blue text and light blue background */
+.table-row-cell:filled:selected,
+.table-row-cell:selected {
+    -fx-background-color: #e3f0fc !important;
+}
+
+.table-cell:filled:selected,
+.table-cell:selected {
+    -fx-background-color: transparent !important;
+    -fx-text-fill: #1976d2 !important;
+}
+

@@ -1,7 +1,7 @@
-com/taskboard/model/Task.class
-com/taskboard/app/MainCLI.class
-com/taskboard/app/PingAtlas.class
-com/taskboard/app/TaskBoardFX.class
-com/taskboard/config/MorphiaConfig.class
-com/taskboard/dao/TaskMorphiaDAO.class
-com/taskboard/App.class
+com\taskboard\config\MorphiaConfig.class
+com\taskboard\App.class
+com\taskboard\app\TaskBoardFX.class
+com\taskboard\dao\TaskMorphiaDAO.class
+com\taskboard\app\MainCLI.class
+com\taskboard\app\PingAtlas.class
+com\taskboard\model\Task.class

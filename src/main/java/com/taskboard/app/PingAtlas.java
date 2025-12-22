@@ -10,9 +10,9 @@ public class PingAtlas {
         try (MongoClient client = MongoClients.create(uri)) {
             MongoDatabase db  = client.getDatabase("admin");
             db.runCommand(new org.bson.Document("ping", 1));
-            System.out.println("✅ Atlas reachable !");
+            System.out.println("Atlas reachable!");
         } catch (Exception e) {
-            System.out.println("❌ " + e.getMessage());
+            System.out.println("Error: " + e.getMessage());
         }
     }
 }

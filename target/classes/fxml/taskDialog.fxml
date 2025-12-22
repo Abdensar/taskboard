@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<DialogPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.taskboard.controller.TaskDialogController"
+            style="-fx-background-color: #ffffff; -fx-padding: 32; -fx-background-radius: 16;">
+
+    <content>
+        <GridPane hgap="16" vgap="16" style="-fx-padding: 8;">
+            <Label text="Title:"        GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <TextField fx:id="tfTitle"  GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+            <Label text="Description:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <TextArea  fx:id="taDesc"   GridPane.rowIndex="1" GridPane.columnIndex="1" prefRowCount="3"/>
+
+            <Label text="Priority:"    GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <ComboBox fx:id="cbPriority" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+            <Label text="Due Date:"    GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+            <DatePicker fx:id="dpDue"  GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+            <Label text="Status:"      GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+            <ComboBox fx:id="cbColumn" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+            <Label text="Department:"  GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+            <ComboBox fx:id="cbDepartment" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+            <Label text="Labels:"      GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+            <TextField fx:id="tfLabels" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+        </GridPane>
+    </content>
+
+    <buttonTypes>
+        <ButtonType text="Save"   buttonData="OK_DONE"/>
+        <ButtonType text="Cancel" buttonData="CANCEL_CLOSE"/>
+    </buttonTypes>
+</DialogPane>
