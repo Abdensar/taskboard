@@ -1,57 +1,50 @@
 package com.taskboard.dao;
 
-import com.taskboard.config.MorphiaConfig;
 import com.taskboard.model.Task;
+import com.taskboard.model.Column;
+import com.taskboard.model.Label;
 import dev.morphia.Datastore;
-import dev.morphia.query.filters.Filters;
+import dev.morphia.query.Query;
+import org.bson.types.ObjectId;
 import java.util.List;
-import java.util.Optional;
 
 public class TaskMorphiaDAO {
+    private final Datastore datastore;
 
-    private final Datastore datastore = MorphiaConfig.getDatastore();
-
-    /* ---------- CRUD ---------- */
-
-    /** Insert or update (if id != null) */
-    public void save(Task task) {
-        if (task.getId() == null || task.getId().isBlank()) {
-            throw new IllegalArgumentException("Task must have a valid id");
-        }
-        System.out.println("[DEBUG] DAO.save called with: " + task);
-        System.out.println("[DEBUG] Task id: " + task.getId());
-        datastore.save(task);          // upsert
-        System.out.println("[DEBUG] DAO.save completed.");
+    // Allow both DI and default config usage
+    public TaskMorphiaDAO(Datastore datastore) {
+        this.datastore = datastore;
+    }
+    public TaskMorphiaDAO() {
+        this.datastore = com.taskboard.config.MorphiaConfig.getDatastore();
     }
 
-    /** Delete one task */
-    public void delete(Task task) {
-        if (task.getId() != null) {
-            datastore.find(Task.class).filter(Filters.eq("_id", task.getId())).delete();
-        }
+    public void create(Task task) {
+        datastore.save(task);
     }
 
-    /** Find by primary key */
-    public Optional<Task> findById(String id) {
-        return Optional.ofNullable(
-                datastore.find(Task.class)
-                         .filter(Filters.eq("_id", id))
-                         .first()
-        );
+    public Task getById(ObjectId id) {
+        return datastore.find(Task.class).filter("_id", id).first();
     }
 
-    /** Get every task */
-    public List<Task> findAll() {
-        return datastore.find(Task.class)
-                        .stream()
-                        .toList();
+    public List<Task> getAll() {
+        return datastore.find(Task.class).iterator().toList();
     }
 
-    /** Get tasks in one column */
-    public List<Task> findByColumn(String column) {
-        return datastore.find(Task.class)
-                        .filter(Filters.eq("column", column))
-                        .stream()
-                        .toList();
+    public List<Task> getByColumn(Column colonne) {
+        return datastore.find(Task.class).filter("colonne", colonne).iterator().toList();
+    }
+
+    public List<Task> getByLabel(Label etiquette) {
+        return datastore.find(Task.class).filter("etiquettes", etiquette).iterator().toList();
+    }
+
+    public void update(Task task) {
+        datastore.save(task);
+    }
+
+    public void delete(ObjectId id) {
+        Query<Task> query = datastore.find(Task.class).filter("_id", id);
+        query.delete();
     }
 }

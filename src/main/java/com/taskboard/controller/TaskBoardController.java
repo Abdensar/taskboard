@@ -8,6 +8,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,17 +26,24 @@ public class TaskBoardController {
     @FXML private ComboBox<String> filterValueCombo;
     @FXML private DatePicker dueDateFilterPicker;
 
+    @FXML private Button exportBtn;
+    @FXML private Label lblColumnName;
+
+    // Drag-and-drop support
+    private Task draggedTask = null;
+
     private final TaskMorphiaDAO dao = new TaskMorphiaDAO();
     private final ObservableList<Task> taskList = FXCollections.observableArrayList();
 
     private void loadTasks() {
-        List<Task> all = dao.findAll();
-        taskList.setAll(all);
+        com.taskboard.model.Column col = com.taskboard.session.CurrentColumn.get();
+        List<Task> filtered = col != null ? dao.getByColumn(col) : List.of();
+        taskList.setAll(filtered);
         taskTable.setItems(taskList);
     }
 
     private void printAllTasks(String context) {
-        List<Task> all = dao.findAll();
+        List<Task> all = dao.getAll();
         System.out.println("[DEBUG] Task list after " + context + ":");
         for (Task t : all) {
             System.out.println("[DEBUG] " + t);
@@ -44,18 +52,25 @@ public class TaskBoardController {
 
     @FXML
     public void initialize() {
+        // Show current column name
+        com.taskboard.model.Column currentColumn = com.taskboard.session.CurrentColumn.get();
+        if (lblColumnName != null && currentColumn != null) {
+            lblColumnName.setText("Column: " + currentColumn.getNom());
+        }
         // Setup columns
-        colTitle.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getTitle()));
+        colTitle.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getTitre()));
         colDesc.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getDescription()));
-        colStatus.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getColumn()));
-        colPriority.setCellValueFactory(c -> new javafx.beans.property.SimpleIntegerProperty(c.getValue().getPriority()));
-        colDepartment.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getDepartment()));
-        colDue.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(String.valueOf(c.getValue().getDueDate())));
-        colDepartment.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
-            c.getValue().getDepartment() != null ? c.getValue().getDepartment() : ""
+        colStatus.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
+            c.getValue().getColonne() != null ? c.getValue().getColonne().getNom() : ""
+        ));
+        colPriority.setCellValueFactory(c -> new javafx.beans.property.SimpleIntegerProperty(c.getValue().getPriorite()));
+        colDue.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
+            c.getValue().getEcheance() != null ? c.getValue().getEcheance().toString() : ""
         ));
         colLabels.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
-            c.getValue().getLabels() != null ? String.join(", ", c.getValue().getLabels()) : ""
+            c.getValue().getEtiquettes() != null && !c.getValue().getEtiquettes().isEmpty()
+                ? c.getValue().getEtiquettes().stream().map(label -> label.getNom()).reduce((a, b) -> a + ", " + b).orElse("")
+                : ""
         ));
         colActions.setCellFactory(tc -> new TableCell<Task, Void>() {
             private final Button editBtn = new Button();
@@ -78,11 +93,11 @@ public class TaskBoardController {
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                     alert.setTitle("Delete Task");
                     alert.setHeaderText("Are you sure you want to delete this task?");
-                    alert.setContentText(t.getTitle());
+                    alert.setContentText(t.getTitre());
                     alert.showAndWait().ifPresent(result -> {
                         if (result == ButtonType.OK) {
                             try {
-                                dao.delete(t);
+                                dao.delete(t.getId());
                                 loadTasks();
                             } catch (Exception ex) {
                                 Alert errorAlert = new Alert(Alert.AlertType.ERROR);
@@ -110,10 +125,49 @@ public class TaskBoardController {
         // Set column resize policy to constrained
         taskTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
+        // Drag-and-drop setup
+        taskTable.setRowFactory(tv -> {
+            TableRow<Task> row = new TableRow<>();
+            row.setOnDragDetected(event -> {
+                if (!row.isEmpty()) {
+                    draggedTask = row.getItem();
+                    javafx.scene.input.Dragboard db = row.startDragAndDrop(javafx.scene.input.TransferMode.MOVE);
+                    javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
+                    content.putString(draggedTask.getId().toString());
+                    db.setContent(content);
+                    event.consume();
+                }
+            });
+            row.setOnDragOver(event -> {
+                if (draggedTask != null && row.getItem() != null && row.getItem() != draggedTask) {
+                    event.acceptTransferModes(javafx.scene.input.TransferMode.MOVE);
+                    event.consume();
+                }
+            });
+            row.setOnDragDropped(event -> {
+                if (draggedTask != null && row.getItem() != null && row.getItem() != draggedTask) {
+                    int draggedIdx = taskList.indexOf(draggedTask);
+                    int targetIdx = row.getIndex();
+                    // Move task in the list
+                    taskList.remove(draggedTask);
+                    taskList.add(targetIdx, draggedTask);
+                    // Optionally update column if moving between columns (not shown here)
+                    taskTable.setItems(taskList);
+                    // Persist order if needed (implement in DAO if you want to save order)
+                    dao.update(draggedTask);
+                    draggedTask = null;
+                    event.setDropCompleted(true);
+                    event.consume();
+                }
+            });
+            row.setOnDragDone(event -> draggedTask = null);
+            return row;
+        });
+
         // Filtering section setup
         if (filterColumnCombo != null) {
-            filterColumnCombo.getItems().setAll("Department", "Label", "Priority", "Status", "Due Date");
-            filterColumnCombo.setValue("Department");
+            filterColumnCombo.getItems().setAll("Priorité", "Étiquette", "Échéance");
+            filterColumnCombo.setValue("Priorité");
             filterColumnCombo.setOnAction(e -> updateFilterValueCombo());
         }
         if (filterValueCombo != null) {
@@ -128,13 +182,13 @@ public class TaskBoardController {
     private void updateFilterValueCombo() {
         if (filterColumnCombo == null || filterValueCombo == null || dueDateFilterPicker == null) return;
         String column = filterColumnCombo.getValue();
-        if (column == null || column.equals("Select column...")) {
+        if (column == null) {
             filterValueCombo.setVisible(false);
             dueDateFilterPicker.setVisible(false);
             filterValueCombo.getItems().clear();
             return;
         }
-        if (column.equals("Due Date")) {
+        if (column.equals("Échéance")) {
             filterValueCombo.setVisible(false);
             dueDateFilterPicker.setVisible(true);
             dueDateFilterPicker.setValue(null);
@@ -145,33 +199,21 @@ public class TaskBoardController {
         }
         filterValueCombo.getItems().clear();
         switch (column) {
-            case "Department": {
-                List<String> departments = taskList.stream().map(Task::getDepartment)
-                    .filter(dep -> dep != null && !dep.isBlank())
-                    .distinct().sorted().collect(java.util.stream.Collectors.toList());
-                filterValueCombo.getItems().add("All");
-                filterValueCombo.getItems().addAll(departments);
-                break;
-            }
-            case "Label": {
-                List<String> labels = taskList.stream()
-                    .flatMap(t -> t.getLabels() != null ? t.getLabels().stream() : java.util.stream.Stream.empty())
+            case "Étiquette": {
+                List<String> etiquettes = taskList.stream()
+                    .flatMap(t -> t.getEtiquettes() != null ? t.getEtiquettes().stream().map(l -> l.getNom()) : java.util.stream.Stream.empty())
                     .filter(l -> l != null && !l.isBlank())
                     .distinct().sorted().collect(java.util.stream.Collectors.toList());
-                filterValueCombo.getItems().add("All");
-                filterValueCombo.getItems().addAll(labels);
+                filterValueCombo.getItems().add("Toutes");
+                filterValueCombo.getItems().addAll(etiquettes);
                 break;
             }
-            case "Priority":
-                filterValueCombo.getItems().add("All");
-                filterValueCombo.getItems().addAll("1 (Low)", "2", "3 (Medium)", "4", "5 (High)");
-                break;
-            case "Status":
-                filterValueCombo.getItems().add("All");
-                filterValueCombo.getItems().addAll("To Do", "In Progress", "Done");
+            case "Priorité":
+                filterValueCombo.getItems().add("Toutes");
+                filterValueCombo.getItems().addAll("1 (Faible)", "2", "3 (Moyenne)", "4", "5 (Haute)");
                 break;
         }
-        filterValueCombo.setValue("All");
+        filterValueCombo.setValue("Toutes");
         applyFilter();
     }
 
@@ -186,47 +228,41 @@ public class TaskBoardController {
             taskTable.setItems(filtered);
             return;
         }
-        if (column.equals("Due Date")) {
+        if (column.equals("Échéance")) {
             if (dueDateFilterPicker.getValue() == null) {
                 taskTable.setItems(filtered);
                 return;
             }
             filtered = FXCollections.observableArrayList(
-                filtered.stream().filter(t -> dueDateFilterPicker.getValue().equals(t.getDueDate())).toList()
+                filtered.stream().filter(t -> t.getEcheance() != null &&
+                    new java.sql.Date(t.getEcheance().getTime()).toLocalDate().equals(dueDateFilterPicker.getValue())
+                ).toList()
             );
             taskTable.setItems(filtered);
             return;
         }
         String value = filterValueCombo.getValue();
-        if (value == null || value.equals("All")) {
+        if (value == null || value.equals("Toutes")) {
             taskTable.setItems(filtered);
             return;
         }
         switch (column) {
-            case "Department":
+            case "Étiquette":
                 filtered = FXCollections.observableArrayList(
-                    filtered.stream().filter(t -> value.equals(t.getDepartment())).toList()
+                    filtered.stream().filter(t -> t.getEtiquettes() != null &&
+                        t.getEtiquettes().stream().anyMatch(l -> l.getNom().equals(value))
+                    ).toList()
                 );
                 break;
-            case "Label":
-                filtered = FXCollections.observableArrayList(
-                    filtered.stream().filter(t -> t.getLabels() != null && t.getLabels().contains(value)).toList()
-                );
-                break;
-            case "Priority":
-                int priority = switch (value) {
-                    case "1 (Low)" -> 1;
-                    case "3 (Medium)" -> 3;
-                    case "5 (High)" -> 5;
+            case "Priorité":
+                int priorite = switch (value) {
+                    case "1 (Faible)" -> 1;
+                    case "3 (Moyenne)" -> 3;
+                    case "5 (Haute)" -> 5;
                     default -> Integer.parseInt(value.replaceAll("[^0-9]", ""));
                 };
                 filtered = FXCollections.observableArrayList(
-                    filtered.stream().filter(t -> t.getPriority() == priority).toList()
-                );
-                break;
-            case "Status":
-                filtered = FXCollections.observableArrayList(
-                    filtered.stream().filter(t -> value.equals(t.getColumn())).toList()
+                    filtered.stream().filter(t -> t.getPriorite() == priorite).toList()
                 );
                 break;
         }
@@ -240,12 +276,63 @@ public class TaskBoardController {
     }
 
     @FXML
+    private void onExport() {
+        try {
+            String filePath = "tasks_export.csv";
+            com.taskboard.util.TaskExportUtil.exportTasksToCSV(taskTable.getItems(), filePath);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Export Success");
+            alert.setHeaderText(null);
+            alert.setContentText("Tasks exported to " + filePath);
+            alert.showAndWait();
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Export Error");
+            alert.setHeaderText("Failed to export tasks");
+            alert.setContentText(e.getMessage());
+            alert.showAndWait();
+        }
+    }
+
+    @FXML
+    private void onBackToColumns() {
+        try {
+            Stage stage = (Stage) taskTable.getScene().getWindow();
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/column.fxml"));
+            stage.getScene().setRoot(loader.load());
+        } catch (java.io.IOException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Navigation Error");
+            alert.setHeaderText("Failed to load columns view");
+            alert.setContentText(e.getMessage());
+            alert.showAndWait();
+        }
+    }
+
+    @FXML
     private void onAddTask() {
         System.out.println("[DEBUG] onAddTask called");
+        if (com.taskboard.session.CurrentColumn.get() == null) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("No Column Selected");
+            alert.setHeaderText(null);
+            alert.setContentText("No column is selected. Please go back and select a column.");
+            alert.showAndWait();
+            return;
+        }
         Optional<Task> opt = showTaskDialog(null);
         opt.ifPresent(task -> {
+            // Always reload the column from DB to ensure it has a valid ID
+            com.taskboard.model.Column col = com.taskboard.session.CurrentColumn.get();
+            if (col != null && col.getId() != null) {
+                com.taskboard.dao.ColumnMorphiaDAO columnDAO = new com.taskboard.dao.ColumnMorphiaDAO();
+                com.taskboard.model.Column dbCol = columnDAO.getById(col.getId());
+                if (dbCol != null) {
+                    task.setColonne(dbCol);
+                }
+            }
             System.out.println("[DEBUG] onAddTask received task: " + task);
-            dao.save(task);
+            dao.create(task);
             loadTasks();
             printAllTasks("add");
         });
@@ -257,7 +344,7 @@ public class TaskBoardController {
         Optional<Task> opt = showTaskDialog(task);
         opt.ifPresent(t -> {
             System.out.println("[DEBUG] onEdit received task: " + t);
-            dao.save(t);
+            dao.update(t);
             loadTasks();
             printAllTasks("edit");
         });

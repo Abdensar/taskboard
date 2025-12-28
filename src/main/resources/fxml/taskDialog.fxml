@@ -16,19 +16,17 @@
             <TextArea  fx:id="taDesc"   GridPane.rowIndex="1" GridPane.columnIndex="1" prefRowCount="3"/>
 
             <Label text="Priority:"    GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-            <ComboBox fx:id="cbPriority" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+            <ComboBox fx:id="cbPriority" GridPane.rowIndex="2" GridPane.columnIndex="1" />
 
             <Label text="Due Date:"    GridPane.rowIndex="3" GridPane.columnIndex="0"/>
             <DatePicker fx:id="dpDue"  GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
-            <Label text="Status:"      GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-            <ComboBox fx:id="cbColumn" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
 
-            <Label text="Department:"  GridPane.rowIndex="5" GridPane.columnIndex="0"/>
-            <ComboBox fx:id="cbDepartment" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+            <Label fx:id="lblCurrentColumn" text="Column: " GridPane.rowIndex="4" GridPane.columnIndex="0" GridPane.columnSpan="2" style="-fx-font-weight: bold;"/>
 
-            <Label text="Labels:"      GridPane.rowIndex="6" GridPane.columnIndex="0"/>
-            <TextField fx:id="tfLabels" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+            <Label text="Labels:"      GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+            <ComboBox fx:id="cbLabels" GridPane.rowIndex="5" GridPane.columnIndex="1" editable="true" promptText="Add/select label..."/>
         </GridPane>
     </content>
 

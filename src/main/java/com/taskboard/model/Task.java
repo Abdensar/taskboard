@@ -1,61 +1,67 @@
 package com.taskboard.model;
 
-import dev.morphia.annotations.*;
-import java.time.LocalDate;
+import dev.morphia.annotations.Entity;
+import dev.morphia.annotations.Id;
+import dev.morphia.annotations.Reference;
+import org.bson.types.ObjectId;
+import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 @Entity("tasks")
 public class Task {
     @Id
-    private String id;
-    private String title;
+    private ObjectId id;
+
+    @Reference
+    private Column colonne;
+
+    private String titre;
     private String description;
-    private int priority;
-    private LocalDate dueDate;
-    private String column;
-    private List<String> labels;
-    private String department;
+    private int priorite; // 1-5
+    private Date echeance;
 
-    public Task() {
-        // Morphia needs an empty constructor
-    }
+    @Reference
+    private List<Label> etiquettes;
 
-    public Task(String title, String description, int priority, LocalDate dueDate, String column, List<String> labels, String department) {
-        this.id = UUID.randomUUID().toString();
-        this.title = title;
+    public Task() {}
+
+    public Task(Column colonne, String titre, String description, int priorite, Date echeance, List<Label> etiquettes) {
+        this.colonne = colonne;
+        this.titre = titre;
         this.description = description;
-        this.priority = priority;
-        this.dueDate = dueDate;
-        this.column = column;
-        this.labels = labels;
-        this.department = department;
+        this.priorite = priorite;
+        this.echeance = echeance;
+        this.etiquettes = etiquettes;
     }
 
-    // Backward compatibility constructor
-    public Task(String title, String description, int priority, LocalDate dueDate, String column, List<String> labels) {
-        this(title, description, priority, dueDate, column, labels, "");
-    }
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = (id == null || id.isBlank()) ? UUID.randomUUID().toString() : id; }
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public ObjectId getId() { return id; }
+    public void setId(ObjectId id) { this.id = id; }
+    public Column getColonne() { return colonne; }
+    public void setColonne(Column colonne) { this.colonne = colonne; }
+    public String getTitre() { return titre; }
+    public void setTitre(String titre) { this.titre = titre; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-    public int getPriority() { return priority; }
-    public void setPriority(int priority) { this.priority = priority; }
-    public LocalDate getDueDate() { return dueDate; }
-    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
-    public String getColumn() { return column; }
-    public void setColumn(String column) { this.column = column; }
-    public List<String> getLabels() { return labels; }
-    public void setLabels(List<String> labels) { this.labels = labels; }
-    public String getDepartment() { return department; }
-    public void setDepartment(String department) { this.department = department; }
+    public int getPriorite() { return priorite; }
+    public void setPriorite(int priorite) {
+        if (priorite < 1 || priorite > 5) {
+            throw new IllegalArgumentException("Priorité doit être entre 1 et 5.");
+        }
+        this.priorite = priorite;
+    }
+    public Date getEcheance() { return echeance; }
+    public void setEcheance(Date echeance) {
+        Date now = new Date();
+        if (echeance != null && echeance.before(now)) {
+            throw new IllegalArgumentException("L'échéance doit être après la date de création.");
+        }
+        this.echeance = echeance;
+    }
+    public List<Label> getEtiquettes() { return etiquettes; }
+    public void setEtiquettes(List<Label> etiquettes) { this.etiquettes = etiquettes; }
 
     @Override
     public String toString() {
-        return title + " (" + column + ")";
+        return titre + " (" + (colonne != null ? colonne.getNom() : "") + ")";
     }
 }

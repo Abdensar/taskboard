@@ -1,0 +1,4 @@
+Titre,Description,Priorité,Échéance,Colonne,Étiquettes
+"task1","desc1",3,"Sun Dec 28 00:00:00 WEST 2025","todo","lab1"
+"task2","desc2",3,"Sun Dec 28 00:00:00 WEST 2025","todo","lab1"
+"task3","desc3",3,"Sun Dec 28 00:00:00 WEST 2025","finished","label 2"

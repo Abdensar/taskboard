@@ -6,10 +6,15 @@
             fx:controller="com.taskboard.controller.TaskBoardController"
             style="-fx-background-color: #f4f6fb; -fx-padding: 24; -fx-background-radius: 16;">
     <top>
-        <ToolBar style="-fx-background-color: #ffffff; -fx-background-radius: 12; -fx-padding: 8 16 8 16; -fx-effect: dropshadow(gaussian, #e0e0e0, 6, 0.2, 0, 2);">
-            <Button text="＋ Add Task" onAction="#onAddTask" style="-fx-background-color: #1976d2; -fx-text-fill: white; -fx-background-radius: 8; -fx-font-weight: bold;"/>
-            <Button text="⟳ Refresh" onAction="#onRefresh" style="-fx-background-color: #e3e7ed; -fx-text-fill: #1976d2; -fx-background-radius: 8; -fx-font-weight: bold;"/>
-        </ToolBar>
+        <VBox>
+            <ToolBar style="-fx-background-color: #ffffff; -fx-background-radius: 12; -fx-padding: 8 16 8 16; -fx-effect: dropshadow(gaussian, #e0e0e0, 6, 0.2, 0, 2);">
+                <Button text="＋ Add Task" onAction="#onAddTask" style="-fx-background-color: #1976d2; -fx-text-fill: white; -fx-background-radius: 8; -fx-font-weight: bold;"/>
+                <Button text="⟳ Refresh" onAction="#onRefresh" style="-fx-background-color: #e3e7ed; -fx-text-fill: #1976d2; -fx-background-radius: 8; -fx-font-weight: bold;"/>
+                <Button text="⭳ Export" onAction="#onExport" fx:id="exportBtn" style="-fx-background-color: #43a047; -fx-text-fill: white; -fx-background-radius: 8; -fx-font-weight: bold;"/>
+                <Button text="⬅ Back to Columns" onAction="#onBackToColumns" style="-fx-background-color: #e3e7ed; -fx-text-fill: #1976d2; -fx-background-radius: 8; -fx-font-weight: bold;"/>
+            </ToolBar>
+            <Label fx:id="lblColumnName" text="Column: " style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-padding: 0 0 8 8;" />
+        </VBox>
     </top>
     <center>
         <VBox spacing="10">
@@ -26,7 +31,6 @@
                 <TableColumn text="Status" prefWidth="100" fx:id="colStatus" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;"/>
                 <TableColumn text="Priority" prefWidth="80" fx:id="colPriority" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;"/>
                 <TableColumn text="Due Date" prefWidth="100" fx:id="colDue" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;"/>
-                <TableColumn text="Department" prefWidth="120" fx:id="colDepartment" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;"/>
                 <TableColumn text="Labels" prefWidth="130" fx:id="colLabels" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;"/>
                 <TableColumn text="Actions" prefWidth="120" fx:id="colActions" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;"/>
             </columns>
