@@ -5,6 +5,7 @@ import com.taskboard.model.User;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
+import javafx.geometry.Pos;
 
 public class RegisterController {
     @FXML private TextField tfEmail;
@@ -14,6 +15,14 @@ public class RegisterController {
     @FXML private Label lblError;
 
     private final UserMorphiaDAO userDAO = new UserMorphiaDAO();
+
+    @FXML
+    public void initialize() {
+        // Center the main layout if it's a VBox
+        if (tfEmail != null && tfEmail.getParent() instanceof javafx.scene.layout.VBox vbox) {
+            vbox.setAlignment(Pos.CENTER);
+        }
+    }
 
     @FXML
     private void onRegister() {

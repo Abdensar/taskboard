@@ -15,7 +15,12 @@
             <TextField fx:id="tfColumnName" promptText="Column name"/>
             <Spinner fx:id="spOrder" promptText="Order" min="1" max="100" initialValue="1"/>
             <Button text="Add Column" onAction="#onAddColumn" style="-fx-background-color: #1976d2; -fx-text-fill: white; -fx-font-weight: bold;"/>
-            <ListView fx:id="lvColumns" prefHeight="120"/>
+            <TableView fx:id="tvColumns" prefHeight="120">
+                <columns>
+                    <TableColumn fx:id="colColumnName" text="Column Name" prefWidth="140" />
+                    <TableColumn fx:id="colColumnActions" text="Actions" prefWidth="120" />
+                </columns>
+            </TableView>
             <Button text="Continue" onAction="#onContinue" style="-fx-background-color: #43a047; -fx-text-fill: white; -fx-font-weight: bold;"/>
             <Label fx:id="lblColumnError" textFill="red"/>
             <TableView fx:id="tvColumnTasks" prefHeight="180">

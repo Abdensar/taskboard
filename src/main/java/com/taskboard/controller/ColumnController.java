@@ -1,4 +1,5 @@
 package com.taskboard.controller;
+import javafx.scene.layout.HBox;
 
 import com.taskboard.dao.ColumnMorphiaDAO;
 import com.taskboard.model.Column;
@@ -13,7 +14,6 @@ import java.util.List;
 public class ColumnController {
     @FXML private TextField tfColumnName;
     @FXML private Spinner<Integer> spOrder;
-    @FXML private ListView<Column> lvColumns;
     @FXML private Label lblColumnError;
     @FXML private Label lblProjectName;
     @FXML private TableView<com.taskboard.model.Task> tvColumnTasks;
@@ -22,6 +22,9 @@ public class ColumnController {
 
     private final ColumnMorphiaDAO columnDAO = new ColumnMorphiaDAO();
     private final List<Column> columns = new ArrayList<>();
+    @FXML private TableView<Column> tvColumns;
+    @FXML private TableColumn<Column, String> colColumnName;
+    @FXML private TableColumn<Column, Void> colColumnActions;
     private Project currentProject;
 
     @FXML
@@ -32,14 +35,9 @@ public class ColumnController {
             List<Column> projectColumns = columnDAO.getByProject(currentProject);
             columns.clear();
             columns.addAll(projectColumns);
-            lvColumns.setItems(FXCollections.observableArrayList(columns));
-            lvColumns.setCellFactory(lv -> new ListCell<>() {
-                @Override protected void updateItem(Column c, boolean empty) {
-                    super.updateItem(c, empty);
-                    setText(empty || c == null ? null : c.getNom());
-                }
-            });
-            lvColumns.setOnMouseClicked(e -> loadColumnTasks());
+            tvColumns.setItems(FXCollections.observableArrayList(columns));
+            tvColumns.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            tvColumns.setOnMouseClicked(e -> loadColumnTasks());
         }
         colTaskTitle.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getTitre()));
         colTaskLabels.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
@@ -47,6 +45,52 @@ public class ColumnController {
         ));
         loadColumnTasks();
         spOrder.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 100, 1));
+
+        // Setup columns table
+        if (tvColumns != null && colColumnName != null && colColumnActions != null) {
+            tvColumns.setItems(FXCollections.observableArrayList(columns));
+            colColumnName.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getNom()));
+            colColumnActions.setCellFactory(tc -> new TableCell<>() {
+                private final Button editBtn = new Button("Edit");
+                private final Button deleteBtn = new Button("Delete");
+                {
+                    editBtn.setOnAction(e -> {
+                        Column col = getTableView().getItems().get(getIndex());
+                        TextInputDialog dialog = new TextInputDialog(col.getNom());
+                        dialog.setTitle("Edit Column");
+                        dialog.setHeaderText("Rename column");
+                        dialog.setContentText("New name:");
+                        dialog.showAndWait().ifPresent(name -> {
+                            if (!name.isBlank()) {
+                                col.setNom(name);
+                                columnDAO.update(col);
+                                getTableView().refresh();
+                            }
+                        });
+                    });
+                    deleteBtn.setOnAction(e -> {
+                        Column col = getTableView().getItems().get(getIndex());
+                        com.taskboard.dao.TaskMorphiaDAO taskDAO = new com.taskboard.dao.TaskMorphiaDAO();
+                        List<com.taskboard.model.Task> tasks = taskDAO.getByColumn(col);
+                        for (com.taskboard.model.Task t : tasks) {
+                            taskDAO.delete(t.getId());
+                        }
+                        columnDAO.delete(col.getId());
+                        getTableView().getItems().remove(col);
+                    });
+                }
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        HBox box = new HBox(5, editBtn, deleteBtn);
+                        setGraphic(box);
+                    }
+                }
+            });
+        }
     }
 
     @FXML
@@ -65,7 +109,7 @@ public class ColumnController {
         Column col = new Column(project, name, order);
         columnDAO.create(col);
         columns.add(col);
-        lvColumns.setItems(FXCollections.observableArrayList(columns));
+        tvColumns.setItems(FXCollections.observableArrayList(columns));
         tfColumnName.clear();
         spOrder.getValueFactory().setValue(1);
         lblColumnError.setText("");
@@ -73,25 +117,27 @@ public class ColumnController {
 
     @FXML
     private void onContinue() {
-        Column selectedColumn = lvColumns.getSelectionModel().getSelectedItem();
+        System.out.println("[DEBUG] onContinue: selectedColumn=" + tvColumns.getSelectionModel().getSelectedItem());
+        Column selectedColumn = tvColumns.getSelectionModel().getSelectedItem();
         if (selectedColumn == null) {
             lblColumnError.setText("Select a column to continue");
             return;
         }
         com.taskboard.session.CurrentColumn.set(selectedColumn);
         try {
-            Stage stage = (Stage) lvColumns.getScene().getWindow();
+            Stage stage = (Stage) tvColumns.getScene().getWindow();
             javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/taskboard.fxml"));
             stage.getScene().setRoot(loader.load());
         } catch (java.io.IOException e) {
             lblColumnError.setText("Failed to load task board");
+            e.printStackTrace();
         }
     }
 
     @FXML
     private void onBackToProjects() {
         try {
-            Stage stage = (Stage) lvColumns.getScene().getWindow();
+            Stage stage = (Stage) tvColumns.getScene().getWindow();
             javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/project.fxml"));
             stage.getScene().setRoot(loader.load());
         } catch (Exception e) {
@@ -100,8 +146,8 @@ public class ColumnController {
     }
 
     private void loadColumnTasks() {
-        if (lvColumns == null || tvColumnTasks == null) return;
-        Column selected = lvColumns.getSelectionModel().getSelectedItem();
+        if (tvColumns == null || tvColumnTasks == null) return;
+        Column selected = tvColumns.getSelectionModel().getSelectedItem();
         if (selected == null) {
             tvColumnTasks.setItems(FXCollections.observableArrayList());
             return;
@@ -116,7 +162,7 @@ public class ColumnController {
         com.taskboard.session.CurrentUser.clear();
         com.taskboard.session.CurrentProject.clear();
         try {
-            Stage stage = (Stage) lvColumns.getScene().getWindow();
+            Stage stage = (Stage) tvColumns.getScene().getWindow();
             javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/login.fxml"));
             stage.getScene().setRoot(loader.load());
         } catch (Exception e) {

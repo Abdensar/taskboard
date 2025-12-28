@@ -18,9 +18,25 @@ public class TaskDialogController {
     @FXML private Label lblCurrentColumn;
 
     private Task task; // null = create
+    private Column selectedColumn;
 
     @FXML
     public void initialize() {
+        // If selectedColumn was set before initialize, use it
+        if (selectedColumn != null && lblCurrentColumn != null) {
+            lblCurrentColumn.setText("Column: " + selectedColumn.getNom());
+            // Update labels for the selected project
+            cbLabels.getItems().clear();
+            if (selectedColumn.getProjet() != null) {
+                com.taskboard.dao.LabelMorphiaDAO labelDAO = new com.taskboard.dao.LabelMorphiaDAO();
+                java.util.List<com.taskboard.model.Label> labels = labelDAO.getAllByProject(selectedColumn.getProjet());
+                for (com.taskboard.model.Label label : labels) {
+                    cbLabels.getItems().add(label.getNom());
+                }
+            }
+            cbLabels.getItems().add("+ Add new label...");
+        }
+
         // TODO: Replace with actual project context
         cbPriority.getItems().setAll("1 (Low)", "2", "3 (Medium)", "4", "5 (High)");
         cbPriority.getSelectionModel().select("3 (Medium)");
@@ -71,7 +87,28 @@ public class TaskDialogController {
         if (t.getEcheance() != null) {
             dpDue.setValue(new java.sql.Date(t.getEcheance().getTime()).toLocalDate());
         }
-        // For column, department, and labels: adapt as needed to your UI logic or remove if not used
+        // Set the label ComboBox to the current label(s) of the task
+        if (t.getEtiquettes() != null && !t.getEtiquettes().isEmpty()) {
+            // If multiple labels, select the first one (adapt if you support multi-select)
+            cbLabels.setValue(t.getEtiquettes().get(0).getNom());
+        }
+    }
+
+    public void setColumn(Column col) {
+        this.selectedColumn = col;
+        if (lblCurrentColumn != null && col != null) {
+            lblCurrentColumn.setText("Column: " + col.getNom());
+        }
+        // Update labels for the selected project
+        cbLabels.getItems().clear();
+        if (col != null && col.getProjet() != null) {
+            com.taskboard.dao.LabelMorphiaDAO labelDAO = new com.taskboard.dao.LabelMorphiaDAO();
+            java.util.List<com.taskboard.model.Label> labels = labelDAO.getAllByProject(col.getProjet());
+            for (com.taskboard.model.Label label : labels) {
+                cbLabels.getItems().add(label.getNom());
+            }
+        }
+        cbLabels.getItems().add("+ Add new label...");
     }
 
     public Optional<Task> getTask() {
@@ -83,7 +120,7 @@ public class TaskDialogController {
         if (dpDue.getValue() != null) {
             echeance = java.sql.Date.valueOf(dpDue.getValue());
         }
-        com.taskboard.model.Column selectedCol = com.taskboard.session.CurrentColumn.get();
+        com.taskboard.model.Column selectedCol = this.selectedColumn != null ? this.selectedColumn : com.taskboard.session.CurrentColumn.get();
         com.taskboard.model.Project project = selectedCol != null ? selectedCol.getProjet() : null;
         List<com.taskboard.model.Label> etiquettes = new java.util.ArrayList<>();
         if (cbLabels.getValue() != null && project != null && !cbLabels.getValue().isBlank() && !cbLabels.getValue().equals("+ Add new label...")) {

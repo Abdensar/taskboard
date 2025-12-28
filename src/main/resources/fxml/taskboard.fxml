@@ -13,16 +13,22 @@
                 <Button text="⭳ Export" onAction="#onExport" fx:id="exportBtn" style="-fx-background-color: #43a047; -fx-text-fill: white; -fx-background-radius: 8; -fx-font-weight: bold;"/>
                 <Button text="⬅ Back to Columns" onAction="#onBackToColumns" style="-fx-background-color: #e3e7ed; -fx-text-fill: #1976d2; -fx-background-radius: 8; -fx-font-weight: bold;"/>
             </ToolBar>
-            <Label fx:id="lblColumnName" text="Column: " style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-padding: 0 0 8 8;" />
+           
         </VBox>
     </top>
     <center>
+        <HBox spacing="16" alignment="TOP_RIGHT" style="-fx-padding: 0 0 10 0;">
+            <Label text="Project:" />
+            <ComboBox fx:id="projectSelector" prefWidth="160" />
+        </HBox>
         <VBox spacing="10">
             <HBox alignment="CENTER_LEFT" spacing="16">
                 <Label text="Filter by:" />
                 <ComboBox fx:id="filterColumnCombo" prefWidth="140" />
                 <ComboBox fx:id="filterValueCombo" prefWidth="140" />
                 <DatePicker fx:id="dueDateFilterPicker" visible="false" />
+                <!-- <Label text="Column:" />  -->
+                <ComboBox fx:id="columnSelector" prefWidth="140" />
             </HBox>
             <TableView fx:id="taskTable" prefHeight="400" maxWidth="1.7976931348623157E308" style="-fx-background-color: #ffffff; -fx-background-radius: 12;">
                 <columns>

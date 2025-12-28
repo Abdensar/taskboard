@@ -10,11 +10,16 @@
                 <Button onAction="#onLogout" text="P" style="-fx-background-color: #1976d2; -fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold; -fx-background-radius: 16; -fx-min-width: 32px; -fx-min-height: 32px; -fx-max-width: 32px; -fx-max-height: 32px;" />
             </HBox>
             <Label text="Choose or Create a Project" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
-            <ComboBox fx:id="cbProjects" promptText="Select project"/>
             <TextField fx:id="tfProjectName" promptText="New project name"/>
             <Button text="Create Project" onAction="#onCreateProject" style="-fx-background-color: #1976d2; -fx-text-fill: white; -fx-font-weight: bold;"/>
             <Button text="Continue" onAction="#onContinue" style="-fx-background-color: #43a047; -fx-text-fill: white; -fx-font-weight: bold;"/>
             <Label fx:id="lblProjectError" textFill="red"/>
+            <TableView fx:id="tvProjects" prefHeight="120">
+                <columns>
+                    <TableColumn fx:id="colProjectName" text="Project Name" prefWidth="180" />
+                    <TableColumn fx:id="colProjectActions" text="Actions" prefWidth="120" />
+                </columns>
+            </TableView>
             <TableView fx:id="tvProjectTasks" prefHeight="180">
                 <columns>
                     <TableColumn fx:id="colTaskTitle" text="Title" prefWidth="180" />
