@@ -31,16 +31,16 @@
                 <ComboBox fx:id="columnSelector" prefWidth="140" />
             </HBox>
             <TableView fx:id="taskTable" prefHeight="400" maxWidth="1.7976931348623157E308" style="-fx-background-color: #ffffff; -fx-background-radius: 12;">
-                <columns>
-                <TableColumn text="Title" prefWidth="150" fx:id="colTitle" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;"/>
-                <TableColumn text="Description" prefWidth="200" fx:id="colDesc" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;"/>
-                <TableColumn text="Status" prefWidth="100" fx:id="colStatus" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;"/>
-                <TableColumn text="Priority" prefWidth="80" fx:id="colPriority" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;"/>
-                <TableColumn text="Due Date" prefWidth="100" fx:id="colDue" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;"/>
-                <TableColumn text="Labels" prefWidth="130" fx:id="colLabels" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;"/>
-                <TableColumn text="Actions" prefWidth="120" fx:id="colActions" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;"/>
-            </columns>
-        </TableView>
+    <columns>
+        <TableColumn text="Title" fx:id="colTitle" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;" prefWidth="150" />
+        <TableColumn text="Description" fx:id="colDesc" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;" prefWidth="200" />
+        <TableColumn text="Status" fx:id="colStatus" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;" prefWidth="100" />
+        <TableColumn text="Priority" fx:id="colPriority" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;" prefWidth="80" />
+        <TableColumn text="Due Date" fx:id="colDue" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;" prefWidth="100" />
+        <TableColumn text="Labels" fx:id="colLabels" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;" prefWidth="130" />
+        <TableColumn text="Actions" fx:id="colActions" style="-fx-background-color: #f4f6fb; -fx-font-weight: bold;" prefWidth="120" />
+    </columns>
+</TableView>
     </VBox>
     </center>
 </BorderPane>

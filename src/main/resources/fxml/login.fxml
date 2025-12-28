@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<AnchorPane xmlns="http://javafx.com/javafx/17"
+<BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.taskboard.controller.LoginController">
-    <children>
-        <VBox alignment="CENTER" spacing="16" layoutX="100" layoutY="60">
-            <Label text="TaskBoard Login" style="-fx-font-size: 22px; -fx-font-weight: bold;"/>
-            <TextField fx:id="tfEmail" promptText="Email"/>
-            <PasswordField fx:id="tfPassword" promptText="Password"/>
-            <Button text="Login" onAction="#onLogin" style="-fx-background-color: #1976d2; -fx-text-fill: white; -fx-font-weight: bold;"/>
-            <Hyperlink text="Register" onAction="#onGoToRegister"/>
+            fx:controller="com.taskboard.controller.LoginController"
+            style="-fx-background-color: #f4f6fb; -fx-padding: 24; -fx-background-radius: 16;">
+    <center>
+        <VBox alignment="CENTER" spacing="18" maxWidth="340" style="-fx-background-color: #ffffff; -fx-padding: 36 48 36 48; -fx-background-radius: 16; -fx-effect: dropshadow(gaussian, #e0e0e0, 10, 0.2, 0, 2);">
+            <Label text="TaskBoard Login" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1976d2;"/>
+            <TextField fx:id="tfEmail" promptText="Email" maxWidth="260"/>
+            <PasswordField fx:id="tfPassword" promptText="Password" maxWidth="260"/>
+            <Button text="Login" onAction="#onLogin" style="-fx-background-color: #1976d2; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-font-size: 15px;" maxWidth="260"/>
+            <HBox alignment="CENTER" spacing="8">
+                <Label text="No account?" style="-fx-text-fill: #888;"/>
+                <Hyperlink text="Register" onAction="#onGoToRegister"/>
+            </HBox>
             <Label fx:id="lblError" textFill="red"/>
         </VBox>
-    </children>
-</AnchorPane>
+    </center>
+</BorderPane>

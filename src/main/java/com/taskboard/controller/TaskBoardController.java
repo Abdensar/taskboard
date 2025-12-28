@@ -18,6 +18,7 @@ public class TaskBoardController {
     @FXML private TableColumn<Task, String>  colDesc;
     @FXML private TableColumn<Task, Number>  colPriority;
     @FXML private TableColumn<Task, String>  colDue;
+    @FXML private TableColumn<Task, String>  colStatus;
     @FXML private TableColumn<Task, String>  colLabels;
     @FXML private TableColumn<Task, Void> colActions;
     @FXML private TableColumn<Task, String>  colDepartment;
@@ -179,6 +180,11 @@ public class TaskBoardController {
         colDue.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
             c.getValue().getEcheance() != null ? c.getValue().getEcheance().toString() : ""
         ));
+        colStatus.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
+            c.getValue().getColonne() != null && c.getValue().getColonne().getNom() != null && !c.getValue().getColonne().getNom().isBlank()
+                ? c.getValue().getColonne().getNom()
+                : "No Status"
+        ));
         colLabels.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
             c.getValue().getEtiquettes() != null && !c.getValue().getEtiquettes().isEmpty()
                 ? c.getValue().getEtiquettes().stream().map(label -> label.getNom()).reduce((a, b) -> a + ", " + b).orElse("")
@@ -279,21 +285,38 @@ public class TaskBoardController {
     private void updateFilterValueCombo() {
         if (filterColumnCombo == null || filterValueCombo == null || dueDateFilterPicker == null) return;
         String column = filterColumnCombo.getValue();
-        if (column == null) {
+        if (column == null || column.equals("Toutes") || column.equals("All")) {
             filterValueCombo.setVisible(false);
             dueDateFilterPicker.setVisible(false);
             filterValueCombo.getItems().clear();
             return;
         }
-        if (column.equals("Échéance")) {
+        if (column.equals("Échéance") || column.equals("Date d’échéance")) {
             filterValueCombo.setVisible(false);
             dueDateFilterPicker.setVisible(true);
-            dueDateFilterPicker.setValue(null);
+            java.util.Set<java.time.LocalDate> uniqueDates = new java.util.HashSet<>();
+            for (Task t : taskList) {
+                if (t.getEcheance() != null) {
+                    uniqueDates.add(t.getEcheance().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+                }
+            }
+            if (!uniqueDates.isEmpty()) {
+                dueDateFilterPicker.setValue(null);
+                dueDateFilterPicker.setDayCellFactory(picker -> new javafx.scene.control.DateCell() {
+                    @Override
+                    public void updateItem(java.time.LocalDate item, boolean empty) {
+                        super.updateItem(item, empty);
+                        setDisable(empty || !uniqueDates.contains(item));
+                    }
+                });
+            } else {
+                dueDateFilterPicker.setValue(null);
+                dueDateFilterPicker.setDayCellFactory(null);
+            }
             return;
-        } else {
-            filterValueCombo.setVisible(true);
-            dueDateFilterPicker.setVisible(false);
         }
+        filterValueCombo.setVisible(true);
+        dueDateFilterPicker.setVisible(false);
         filterValueCombo.getItems().clear();
         switch (column) {
             case "Étiquette": {
@@ -309,16 +332,28 @@ public class TaskBoardController {
                 filterValueCombo.getItems().add("Toutes");
                 filterValueCombo.getItems().addAll("1 (Faible)", "2", "3 (Moyenne)", "4", "5 (Haute)");
                 break;
+            case "Status": {
+                java.util.Set<String> statuses = new java.util.HashSet<>();
+                for (Task t : taskList) {
+                    if (t.getColonne() != null && t.getColonne().getNom() != null && !t.getColonne().getNom().isBlank()) {
+                        statuses.add(t.getColonne().getNom());
+                    }
+                }
+                if (statuses.isEmpty()) {
+                    statuses.add("To Do");
+                    statuses.add("In Progress");
+                    statuses.add("Done");
+                }
+                filterValueCombo.getItems().add("Toutes");
+                filterValueCombo.getItems().addAll(statuses);
+                break;
+            }
         }
         filterValueCombo.setValue("Toutes");
         applyFilter();
     }
 
     private void applyFilter() {
-        if (filterColumnCombo == null || filterValueCombo == null || dueDateFilterPicker == null) {
-            taskTable.setItems(taskList);
-            return;
-        }
         String column = filterColumnCombo.getValue();
         ObservableList<Task> filtered = FXCollections.observableArrayList(taskList);
         if (column == null) {
@@ -426,6 +461,8 @@ public class TaskBoardController {
             dao.create(task);
             printAllTasks("add");
             loadTasksForSelection();
+            updateFilterValueCombo();
+            applyFilter();
         });
     }
 
@@ -437,6 +474,9 @@ public class TaskBoardController {
             System.out.println("[DEBUG] onEdit received task: " + t);
             dao.update(t);
             printAllTasks("edit");
+            loadTasksForSelection();
+            updateFilterValueCombo();
+            applyFilter();
         });
     }
 
