@@ -1,6 +1,2 @@
 Titre,Description,Priorité,Échéance,Colonne,Étiquettes
-"task12","desc1",3,"Sun Dec 28 00:00:00 WEST 2025","tonotdo","label12"
-"task2","desc2",3,"Wed Dec 31 00:00:00 WEST 2025","tonotdo","lab1"
-"tas1","des1",3,"Mon Dec 29 00:00:00 WEST 2025","tonotdo","lab1"
-"task3","desc3",3,"Sun Dec 28 00:00:00 WEST 2025","finished","label 2"
-"task1","desc2",3,"Sun Dec 28 00:00:00 WEST 2025","finished","lab1"
+"task2","desc2",3,"Sun Dec 28 00:00:00 WEST 2025","to do","lable3"

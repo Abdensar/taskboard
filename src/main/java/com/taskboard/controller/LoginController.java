@@ -19,12 +19,14 @@ public class LoginController {
         String pass = tfPassword.getText();
         if (email.isEmpty() || pass.isEmpty()) {
             lblError.setText("Email and password required");
+            System.err.println("[LOGIN ERROR] Email and password required");
             return;
         }
         try {
             User user = userDAO.getByEmail(email);
             if (user == null || !user.getPassword().equals(pass)) {
                 lblError.setText("Invalid email or password");
+                System.err.println("[LOGIN ERROR] Invalid email or password");
                 return;
             }
             com.taskboard.session.CurrentUser.set(user);
@@ -32,7 +34,14 @@ public class LoginController {
             javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/project.fxml"));
             stage.getScene().setRoot(loader.load());
         } catch (Exception e) {
-            lblError.setText(e.getMessage());
+            String msg = e.getMessage();
+            if (msg != null && (msg.toLowerCase().contains("schema") || msg.toLowerCase().contains("chema"))) {
+                lblError.setText("Database schema error. Please contact support.");
+            System.err.println("[LOGIN ERROR] Database schema error. Please contact support.");
+            } else {
+                lblError.setText(msg);
+            System.err.println("[LOGIN ERROR] " + msg);
+            }
         }
     }
 
@@ -44,6 +53,7 @@ public class LoginController {
             stage.getScene().setRoot(loader.load());
         } catch (Exception e) {
             lblError.setText("Failed to load register");
+        System.err.println("[LOGIN ERROR] Failed to load register");
         }
     }
 

@@ -24,11 +24,11 @@ public class ProjectMorphiaDAO {
         return datastore.find(Project.class).filter("_id", id).first();
     }
 
-    public List<Project> getAll() {
-        return datastore.find(Project.class).iterator().toList();
-    }
     public List<Project> getByOwner(com.taskboard.model.User owner) {
         return datastore.find(Project.class).filter("owner", owner).iterator().toList();
+    }
+    public List<Project> getBySharedUser(com.taskboard.model.User user) {
+        return datastore.find(Project.class).filter("sharedUsers", user).iterator().toList();
     }
 
     public void update(Project project) {

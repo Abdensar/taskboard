@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Optional;
 
 public class TaskBoardController {
+    @FXML private MenuButton userMenuBtn;
+    @FXML private MenuItem userNameMenuItem;
+    @FXML private MenuItem userEmailMenuItem;
     @FXML private TableView<Task> taskTable;
     @FXML private TableColumn<Task, String>  colTitle;
     @FXML private TableColumn<Task, String>  colDesc;
@@ -100,11 +103,45 @@ public class TaskBoardController {
 
     @FXML
     public void initialize() {
+        // Check if a column is selected (required for taskboard)
+        com.taskboard.model.Column selectedColumn = com.taskboard.session.CurrentColumn.get();
+        if (selectedColumn == null) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Taskboard Load Error");
+            alert.setHeaderText("No column selected");
+            alert.setContentText("You must select a column before accessing the taskboard. Returning to columns page.");
+            alert.showAndWait();
+            // Return to columns page
+            try {
+                Stage stage = (Stage) userMenuBtn.getScene().getWindow();
+                javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/column.fxml"));
+                stage.getScene().setRoot(loader.load());
+            } catch (Exception e) {
+                // If navigation fails, show another alert
+                Alert fallback = new Alert(Alert.AlertType.ERROR);
+                fallback.setTitle("Critical Error");
+                fallback.setHeaderText("Failed to return to columns page");
+                fallback.setContentText(e.getMessage());
+                fallback.showAndWait();
+            }
+            return;
+        }
+        // Set user dropdown info
+        com.taskboard.model.User currentUser = com.taskboard.session.CurrentUser.get();
+        if (userNameMenuItem != null && currentUser != null) {
+            userNameMenuItem.setText("Username: " + currentUser.getNom());
+        }
+        if (userEmailMenuItem != null && currentUser != null) {
+            userEmailMenuItem.setText("Email: " + currentUser.getEmail());
+        }
         // Populate project selector
         com.taskboard.dao.ProjectMorphiaDAO projectDAO = new com.taskboard.dao.ProjectMorphiaDAO();
-        com.taskboard.model.User currentUser = com.taskboard.session.CurrentUser.get();
-        java.util.List<com.taskboard.model.Project> projects = projectDAO.getByOwner(currentUser);
-        projectSelector.setItems(FXCollections.observableArrayList(projects));
+        java.util.List<com.taskboard.model.Project> ownedProjects = projectDAO.getByOwner(currentUser);
+        java.util.List<com.taskboard.model.Project> sharedProjects = projectDAO.getBySharedUser(currentUser);
+        java.util.Set<com.taskboard.model.Project> allProjects = new java.util.LinkedHashSet<>();
+        allProjects.addAll(ownedProjects);
+        allProjects.addAll(sharedProjects);
+        projectSelector.setItems(FXCollections.observableArrayList(allProjects));
         projectSelector.setCellFactory(lv -> new ListCell<>() {
             @Override
             protected void updateItem(com.taskboard.model.Project p, boolean empty) {
@@ -116,13 +153,13 @@ public class TaskBoardController {
         // Default select the current project from session
         com.taskboard.model.Project currentProject = com.taskboard.session.CurrentProject.get();
         if (currentProject != null) {
-            for (com.taskboard.model.Project p : projects) {
+            for (com.taskboard.model.Project p : allProjects) {
                 if (p.getId().equals(currentProject.getId())) {
                     projectSelector.getSelectionModel().select(p);
                     break;
                 }
             }
-        } else if (!projects.isEmpty()) {
+        } else if (!allProjects.isEmpty()) {
             projectSelector.getSelectionModel().selectFirst();
         }
         loadColumnsForProject();
@@ -436,6 +473,24 @@ public class TaskBoardController {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Navigation Error");
             alert.setHeaderText("Failed to load columns view");
+            alert.setContentText(e.getMessage());
+            alert.showAndWait();
+        }
+    }
+
+    @FXML
+    private void onLogout() {
+        com.taskboard.session.CurrentUser.clear();
+        com.taskboard.session.CurrentProject.clear();
+        com.taskboard.session.CurrentColumn.clear();
+        try {
+            Stage stage = (Stage) userMenuBtn.getScene().getWindow();
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+            stage.getScene().setRoot(loader.load());
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Logout Error");
+            alert.setHeaderText("Failed to logout");
             alert.setContentText(e.getMessage());
             alert.showAndWait();
         }

@@ -14,6 +14,7 @@ public class TaskDialogController {
     @FXML private TextArea  taDesc;
     @FXML private ComboBox<String> cbPriority;
     @FXML private DatePicker dpDue;
+    @FXML private ComboBox<Column> cbColumn;
     @FXML private ComboBox<String> cbLabels;
     @FXML private Label lblCurrentColumn;
 
@@ -22,6 +23,30 @@ public class TaskDialogController {
 
     @FXML
     public void initialize() {
+        // Populate cbColumn with columns from parent project if possible
+        com.taskboard.model.Project project = null;
+        com.taskboard.model.Column col = com.taskboard.session.CurrentColumn.get();
+        if (col != null) project = col.getProjet();
+        if (project != null && cbColumn != null) {
+            com.taskboard.dao.ColumnMorphiaDAO columnDAO = new com.taskboard.dao.ColumnMorphiaDAO();
+            java.util.List<com.taskboard.model.Column> columns = columnDAO.getByProject(project);
+            cbColumn.getItems().setAll(columns);
+            cbColumn.setCellFactory(lv -> new ListCell<>() {
+                @Override
+                protected void updateItem(com.taskboard.model.Column c, boolean empty) {
+                    super.updateItem(c, empty);
+                    setText(empty || c == null ? null : c.getNom());
+                }
+            });
+            cbColumn.setButtonCell(new ListCell<>() {
+                @Override
+                protected void updateItem(com.taskboard.model.Column c, boolean empty) {
+                    super.updateItem(c, empty);
+                    setText(empty || c == null ? null : c.getNom());
+                }
+            });
+        }
+
         // If selectedColumn was set before initialize, use it
         if (selectedColumn != null && lblCurrentColumn != null) {
             lblCurrentColumn.setText("Column: " + selectedColumn.getNom());
@@ -41,7 +66,6 @@ public class TaskDialogController {
         cbPriority.getItems().setAll("1 (Low)", "2", "3 (Medium)", "4", "5 (High)");
         cbPriority.getSelectionModel().select("3 (Medium)");
         dpDue.setValue(LocalDate.now());
-        com.taskboard.model.Column col = com.taskboard.session.CurrentColumn.get();
         if (lblCurrentColumn != null && col != null) {
             lblCurrentColumn.setText("Column: " + col.getNom());
         }
@@ -76,6 +100,11 @@ public class TaskDialogController {
     }
 
     public void setTask(Task t) {
+        // Set the column ComboBox value to the task's column
+        if (cbColumn != null && t.getColonne() != null) {
+            cbColumn.setValue(t.getColonne());
+        }
+
         this.task = t;
         tfTitle.setText(t.getTitre());
         taDesc.setText(t.getDescription());
@@ -112,6 +141,8 @@ public class TaskDialogController {
     }
 
     public Optional<Task> getTask() {
+        // Use selected column from ComboBox if available
+        Column selectedCol = cbColumn != null && cbColumn.getValue() != null ? cbColumn.getValue() : (this.selectedColumn != null ? this.selectedColumn : com.taskboard.session.CurrentColumn.get());
         System.out.println("[DEBUG] getTask called");
         String titre  = tfTitle.getText().trim();
         String desc   = taDesc.getText().trim();
@@ -120,7 +151,6 @@ public class TaskDialogController {
         if (dpDue.getValue() != null) {
             echeance = java.sql.Date.valueOf(dpDue.getValue());
         }
-        com.taskboard.model.Column selectedCol = this.selectedColumn != null ? this.selectedColumn : com.taskboard.session.CurrentColumn.get();
         com.taskboard.model.Project project = selectedCol != null ? selectedCol.getProjet() : null;
         List<com.taskboard.model.Label> etiquettes = new java.util.ArrayList<>();
         if (cbLabels.getValue() != null && project != null && !cbLabels.getValue().isBlank() && !cbLabels.getValue().equals("+ Add new label...")) {

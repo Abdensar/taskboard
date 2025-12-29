@@ -12,10 +12,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ColumnController {
+    @FXML private MenuButton userMenuBtn;
+    @FXML private MenuItem userNameMenuItem;
+    @FXML private MenuItem userEmailMenuItem;
     @FXML private TextField tfColumnName;
     @FXML private Spinner<Integer> spOrder;
     @FXML private Label lblColumnError;
     @FXML private Label lblProjectName;
+    @FXML private TableColumn<Column, Integer> colColumnOrder;
     @FXML private TableView<com.taskboard.model.Task> tvColumnTasks;
     @FXML private TableColumn<com.taskboard.model.Task, String> colTaskTitle;
     @FXML private TableColumn<com.taskboard.model.Task, String> colTaskLabels;
@@ -29,6 +33,30 @@ public class ColumnController {
 
     @FXML
     public void initialize() {
+        // Set order column binding
+        if (colColumnOrder != null) {
+            colColumnOrder.setCellValueFactory(data -> new javafx.beans.property.SimpleIntegerProperty(data.getValue().getOrdre()).asObject());
+        }
+        // Sort columns by order before displaying
+        currentProject = com.taskboard.session.CurrentProject.get();
+        if (currentProject != null) {
+            lblProjectName.setText("Project: " + currentProject.getNom());
+            List<Column> projectColumns = columnDAO.getByProject(currentProject);
+            projectColumns.sort(java.util.Comparator.comparingInt(Column::getOrdre));
+            columns.clear();
+            columns.addAll(projectColumns);
+            tvColumns.setItems(FXCollections.observableArrayList(columns));
+            tvColumns.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            tvColumns.setOnMouseClicked(e -> loadColumnTasks());
+        }
+        // Set user dropdown info
+        com.taskboard.model.User currentUser = com.taskboard.session.CurrentUser.get();
+        if (userNameMenuItem != null && currentUser != null) {
+            userNameMenuItem.setText("Username: " + currentUser.getNom());
+        }
+        if (userEmailMenuItem != null && currentUser != null) {
+            userEmailMenuItem.setText("Email: " + currentUser.getEmail());
+        }
         currentProject = com.taskboard.session.CurrentProject.get();
         if (currentProject != null) {
             lblProjectName.setText("Project: " + currentProject.getNom());
@@ -106,9 +134,17 @@ public class ColumnController {
             lblColumnError.setText("No project selected. Please go back and select a project.");
             return;
         }
+        // Check for duplicate order in the same project
+        for (Column c : columns) {
+            if (c.getOrdre() == order) {
+                lblColumnError.setText("Order must be unique within the project.");
+                return;
+            }
+        }
         Column col = new Column(project, name, order);
         columnDAO.create(col);
         columns.add(col);
+        columns.sort(java.util.Comparator.comparingInt(Column::getOrdre));
         tvColumns.setItems(FXCollections.observableArrayList(columns));
         tfColumnName.clear();
         spOrder.getValueFactory().setValue(1);
@@ -124,6 +160,15 @@ public class ColumnController {
             return;
         }
         com.taskboard.session.CurrentColumn.set(selectedColumn);
+        // Defensive: verify CurrentColumn is set
+        if (com.taskboard.session.CurrentColumn.get() == null) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Taskboard Load Error");
+            alert.setHeaderText("Failed to set selected column");
+            alert.setContentText("Could not set the selected column in session. Please try again.");
+            alert.showAndWait();
+            return;
+        }
         try {
             Stage stage = (Stage) tvColumns.getScene().getWindow();
             javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/fxml/taskboard.fxml"));
